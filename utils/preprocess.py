@@ -55,8 +55,8 @@ dccy_new.columns = ["XH", "XNXQ", "new_count"]
 dccy_cumulative = []
 for xh, group in dccy_new.groupby("XH"):
     group_sorted = group.sort_values(by="XNXQ").reset_index(drop=True)
-    group_sorted["cumulative_count"] = group_sorted["new_count"].cumsum()
-    dccy_cumulative.append(group_sorted[["XH", "XNXQ", "cumulative_count"]])
+    group_sorted["DCCY"] = group_sorted["new_count"].cumsum()
+    dccy_cumulative.append(group_sorted[["XH", "XNXQ", "DCCY"]])
 
 dccy_count = pd.concat(dccy_cumulative, ignore_index=True)
 
@@ -76,13 +76,14 @@ df = pd.merge(
     on=["XH", "XNXQ"],  # 基于“学号+学期”两个键进行精确匹配
     how="left"  # 保留左表所有记录，右表没有匹配的用NaN填充
 )
+df["DCCY"] = df["DCCY"].fillna(0).astype(int)
 
 df = df.merge(jxj_counts, on="XH", how="left")
 df["JXJ"] = df["JXJ"].fillna(0).astype(int)
 
-df["XYYJ"] = 1
+df["XYYJ"] = 0
 df["XYYJ"] = df.apply(
-    lambda row: 0 if (row["XH"], row["XNXQ"]) in warning_pairs else 1,
+    lambda row: 1 if (row["XH"], row["XNXQ"]) in warning_pairs else 0,
     axis=1
 )
 
