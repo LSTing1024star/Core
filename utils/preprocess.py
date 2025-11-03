@@ -27,7 +27,7 @@ has_remove = df_xyyj[["XQSHJG", "JMSHJG", "JNCSHJG"]].apply(
 ).any(axis=1)
 
 df_xyyj_filtered = df_xyyj[~has_remove].copy()
-warning_pairs = set(zip(df_xyyj_filtered["XH"], df_xyyj_filtered["XNXQ"]))
+warning_pairs = set(zip(df_xyyj_filtered["XH"].astype(str), df_xyyj_filtered["XNXQ"].astype(str)))
 
 #############3. 处理DCCY#############
 df_dccy = pd.read_csv("D:/LST/Core-main/Core-main/data/DCCY.csv", encoding="utf-8-sig")
