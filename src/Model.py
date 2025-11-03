@@ -41,6 +41,10 @@ class ModelTrainer:
         """加载并初始化训练集和测试集"""
         self.df_train = pd.read_csv(self.train_path, encoding=self.encoding).fillna(0)
         self.df_test = pd.read_csv(self.test_path, encoding=self.encoding).fillna(0)
+        if "XH" in self.df_train.columns:
+            self.df_train.drop(colums=["XH"],inplace=True)
+        if "XH" in self.df_test.columns:
+            self.df_test.drop(colums=["XH"],inplace=True)
         print(f"训练集形状: {self.df_train.shape}, 测试集形状: {self.df_test.shape}")
         print(f"训练集缺失值总数: {self.df_train.isnull().sum().sum()}")
         print(f"测试集缺失值总数: {self.df_test.isnull().sum().sum()}")

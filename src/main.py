@@ -5,9 +5,9 @@ from ExplainabilityAnalyzer import ExplainabilityAnalyzer
 if __name__ == "__main__":
     # 1. 模型训练与预测
     trainer = ModelTrainer(
-        train_path='data_temp/train.csv',
-        test_path='data_temp/test.csv',
-        target_col='学业预警'
+        train_path='data_temp/train_data.csv',
+        test_path='data_temp/test_data.csv',
+        target_col='XYYJ'
     )
     trainer.load_data()
     trainer.preprocess_data()
