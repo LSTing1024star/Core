@@ -4,6 +4,8 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import confusion_matrix, classification_report, mean_squared_error
+import pandas as pd
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 
 class ModelTrainer:
@@ -49,12 +51,20 @@ class ModelTrainer:
         # 处理训练集
         self._numerical_convert(self.df_train)
         self._reorder_target_col(self.df_train)
-        self._feature_scaling(self.df_train)
+        # self._feature_scaling(self.df_train)
         
         # 处理测试集
         self._numerical_convert(self.df_test)
         self._reorder_target_col(self.df_test)
-        self._feature_scaling(self.df_test)
+        # self._feature_scaling(self.df_test)
+        
+        feature_cols = ["GPA", "DCCY", "JXJ"]
+        self.df_train,self.df_test,_=normalize_data(
+            train_df=self.df_train,
+            test_df=self.df_test,
+            feature_cols=feature_cols,
+            method="minmax",
+        )
 
 
     def split_data(self, test_size=0.3, random_state=4):
@@ -133,7 +143,7 @@ class ModelTrainer:
     # 内部工具方法
     def _numerical_convert(self, df):
         """将字符串特征转换为数值型"""
-        numeric_cols = ['GPA', '是否获得奖学金', '是否参加大创', '是否参加暑期征文']
+        numeric_cols = ['GPA', 'DCCY', 'JXJ']
         for col in numeric_cols:
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
@@ -169,3 +179,60 @@ class ModelTrainer:
                 # 小范围特征：归一化到0-1
                 if max_val != min_val:
                     df[col] = (df[col] - min_val) / (max_val - min_val)
+                    
+def normalize_data(
+    train_df,
+    test_df,
+    feature_cols,  # 需要归一化的特征列名列表
+    method="minmax",  # 归一化方法："minmax" 或 "standard"
+    train_save_path=None,
+    test_save_path=None
+):
+    """
+    对训练集和测试集的特征进行归一化（用训练集的统计量）
+    
+    参数：
+    - train_df: 训练集DataFrame
+    - test_df: 测试集DataFrame
+    - feature_cols: 需要归一化的特征列（如 ["GPA", "DCCY", "JXJ"]）
+    - method: 归一化方法，"minmax"（[0,1]区间）或 "standard"（均值0，标准差1）
+    - train_save_path: 归一化后的训练集保存路径（None则不保存）
+    - test_save_path: 归一化后的测试集保存路径（None则不保存）
+    """
+    # 1. 检查特征列是否存在
+    missing_cols = [col for col in feature_cols if col not in train_df.columns]
+    if missing_cols:
+        raise ValueError(f"训练集中缺少特征列：{missing_cols}")
+    
+    # 2. 初始化归一化器
+    if method == "minmax":
+        scaler = MinMaxScaler()  # Min-Max归一化：(x - min)/(max - min)
+    elif method == "standard":
+        scaler = StandardScaler()  # Z-score标准化：(x - mean)/std
+    else:
+        raise ValueError("method必须是'minmax'或'standard'")
+    
+    # 3. 用训练集拟合归一化器（只使用训练集的统计量，避免数据泄露）
+    scaler.fit(train_df[feature_cols])
+    
+    # 4. 转换训练集和测试集
+    train_norm = train_df.copy()
+    test_norm = test_df.copy()
+    
+    # 对特征列进行归一化
+    train_norm[feature_cols] = scaler.transform(train_df[feature_cols])
+    test_norm[feature_cols] = scaler.transform(test_df[feature_cols])  # 用训练集的scaler转换测试集
+    
+    # 5. 打印归一化前后的统计量（验证效果）
+    print(f"\n【{method}归一化后 - 训练集特征统计量】")
+    print(train_norm[feature_cols].describe().round(4))
+    
+    # 6. 保存结果（如果指定路径）
+    if train_save_path:
+        train_norm.to_csv(train_save_path, encoding="utf-8-sig", index=False)
+        print(f"归一化后的训练集已保存至 {train_save_path}")
+    if test_save_path:
+        test_norm.to_csv(test_save_path, encoding="utf-8-sig", index=False)
+        print(f"归一化后的测试集已保存至 {test_save_path}")
+    
+    return train_norm, test_norm, scaler  # 返回归一化后的数据和拟合好的scaler（后续可用于新数据）
