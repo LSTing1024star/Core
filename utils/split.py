@@ -81,6 +81,73 @@ def split_and_oversample(
     return train_df, test_df
 
 
+import pandas as pd
+import numpy as np
+
+def split_train_test_by_time(
+    data_path,
+    id_col='XH',          # 学号列名
+    term_col='XQXN',      # 学期列名（字符串格式，如201601）
+    target_col='学业预警',  # 目标列名
+    test_ratio=0.2,       # 测试集占比（如0.2表示20%数据作为test）
+    save_train_path='train_data.csv',
+    save_test_path='test_data.csv',
+    encoding='gbk'
+):
+    """
+    按时间顺序分割时序数据集为train和test
+    """
+    # 1. 加载数据集
+    df = pd.read_csv(data_path, encoding=encoding).fillna(0)
+    print(f"原始数据集形状：{df.shape}")
+    
+    # 2. 检查必要列
+    required_cols = [id_col, term_col, target_col]
+    for col in required_cols:
+        if col not in df.columns:
+            raise ValueError(f"数据集缺少必要列：{col}")
+    
+    # 3. 按学期排序，确定时间顺序
+    # 转换学期列为字符串（避免数字格式干扰排序）
+    df[term_col] = df[term_col].astype(str)
+    # 提取所有不重复的学期，并按时间升序排序
+    unique_terms = sorted(df[term_col].unique())
+    print(f"所有学期（按时间排序）：{unique_terms}")
+    
+    # 4. 确定分割点（按比例选择较晚的学期作为test）
+    # 例如：80%早学期为train，20%晚学期为test
+    split_idx = int(len(unique_terms) * (1 - test_ratio))
+    if split_idx <= 0 or split_idx >= len(unique_terms):
+        raise ValueError("测试集比例不合理，导致分割点无效（建议test_ratio在0.1-0.3之间）")
+    
+    train_terms = unique_terms[:split_idx]  # 训练集包含的学期（早）
+    test_terms = unique_terms[split_idx:]   # 测试集包含的学期（晚）
+    print(f"训练集学期：{train_terms}（共{len(train_terms)}个学期）")
+    print(f"测试集学期：{test_terms}（共{len(test_terms)}个学期）")
+    
+    # 5. 分割数据
+    train_df = df[df[term_col].isin(train_terms)].copy()
+    test_df = df[df[term_col].isin(test_terms)].copy()
+    
+    # 6. 验证分割有效性（test的学期均晚于train）
+    max_train_term = max(train_terms)
+    min_test_term = min(test_terms)
+    if max_train_term >= min_test_term:
+        raise ValueError(f"分割错误：训练集最晚学期{max_train_term} >= 测试集最早学期{min_test_term}")
+    
+    # 7. 打印分割后信息
+    print(f"训练集形状：{train_df.shape}，测试集形状：{test_df.shape}")
+    print(f"训练集目标列分布：\n{train_df[target_col].value_counts(normalize=True).round(3)}")
+    print(f"测试集目标列分布：\n{test_df[target_col].value_counts(normalize=True).round(3)}")
+    
+    # 8. 保存分割结果
+    train_df.to_csv(save_train_path, index=False, encoding=encoding)
+    test_df.to_csv(save_test_path, index=False, encoding=encoding)
+    print(f"训练集已保存至：{save_train_path}")
+    print(f"测试集已保存至：{save_test_path}")
+    
+    return train_df, test_df
+
 # #############使用示例#############
 if __name__ == "__main__":
     # 路径设置（根据实际情况修改）
@@ -89,11 +156,20 @@ if __name__ == "__main__":
     test_save_path = "D:/LST/Core-main/Core-main/data/test_data.csv"    # 测试集保存路径
     
     # 调用函数：设置训练集XYYJ=1的目标占比为10%（可调整为0.2即20%等）
-    train_df, test_df = split_and_oversample(
-        totaldata_path=totaldata_path,
-        train_save_path=train_save_path,
-        test_save_path=test_save_path,
-        test_size=0.2,  # 测试集占20%
-        random_state=42,
-        target_positive_ratio=0.1  # 目标：训练集中正样本占比10%
+    # train_df, test_df = split_and_oversample(
+    #     totaldata_path=totaldata_path,
+    #     train_save_path=train_save_path,
+    #     test_save_path=test_save_path,
+    #     test_size=0.2,  # 测试集占20%
+    #     random_state=42,
+    #     target_positive_ratio=0.1  # 目标：训练集中正样本占比10%
+    # )
+
+    train_df, test_df = split_train_test_by_time(
+        data_path=totaldata_path,
+        test_ratio=0.2,
+        save_train_path=train_save_path,
+        save_test_path=test_save_path,
+        encoding="utf-8-sig"
     )
+
