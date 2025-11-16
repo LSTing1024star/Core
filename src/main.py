@@ -1,4 +1,11 @@
 from ManualRNN import ManualRNN
+import sys
+import os
+current_file_path = os.path.abspath(__file__)  # 结果类似：parent_dir/A/c.py
+a_dir = os.path.dirname(current_file_path)     # 结果类似：parent_dir/A
+parent_dir = os.path.dirname(a_dir)            # 结果类似：parent_dir
+sys.path.append(parent_dir)
+from utils.buildSeq import load_and_preprocess_data
 
 def train_model(model, train_sequences, train_labels, epochs=20, lr=0.01):
     """训练手动RNN模型"""
