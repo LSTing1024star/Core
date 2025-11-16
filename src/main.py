@@ -104,8 +104,8 @@ if __name__ == "__main__":
     # 1. 加载并预处理数据（每个时间步有标签）
     (train_seqs, train_labels, train_ids,
      test_seqs, test_labels, test_ids) = load_and_preprocess_data(
-        train_path='D:/LST/Core-main/data/train_data_seq.csv',
-        test_path='D:/LST/Core-main/data/test_data_seq.csv',
+        train_path='D:/LST/Core-main/Core-main/data/train_data_seq.csv',
+        test_path='D:/LST/Core-main/Core-main/data/test_data_seq.csv',
         max_seq_len=12,  # 每个学生最多12个学期的序列
         encoding='utf-8-sig'
     )
@@ -129,5 +129,5 @@ if __name__ == "__main__":
     test_preds, test_probs = test_model(
         model, test_seqs, test_labels, test_ids,
         max_seq_len=12,
-        save_path='D:/LST/Core-main/data/manual_rnn_step_predictions.csv'
+        save_path='D:/LST/Core-main/Core-main/data/manual_rnn_step_predictions.csv'
     )
