@@ -13,31 +13,26 @@ from utils.buildSeq import load_and_preprocess_data
 
 
 def train_model(model, train_sequences, train_labels, epochs=20, lr=0.01):
-    # 计算类别权重（自动适配数据不平衡比例）
-    n_pos = np.sum(train_labels == 1)  # 少数类（1）的数量
-    n_neg = len(train_labels) - n_pos  # 多数类（0）的数量
-    pos_weight = n_neg / n_pos  # 少数类权重 = 多数类数量 / 少数类数量（确保权重>1）
-    print(f"类别比例（0:{1}）：{n_neg}:{n_pos}，少数类权重：{pos_weight:.2f}")
-    
+    """训练手动RNN模型"""
     for epoch in range(epochs):
         total_loss = 0.0
-        for seq, label in zip(train_sequences, train_labels):
+        # 逐样本训练（简单起见，不实现批量梯度下降）
+        for seq, label in tqdm(zip(train_sequences, train_labels)):
+            # 前向传播：获取预测和隐藏状态
             y_pred, h_states = model.forward(seq)
-            # 带权重的交叉熵损失（少数类错误损失放大）
-            if label == 1:
-                # 对少数类（1）的损失乘以权重
-                loss = -pos_weight * label * np.log(y_pred + 1e-8) - (1 - label) * np.log(1 - y_pred + 1e-8)
-            else:
-                # 多数类（0）损失保持不变
-                loss = -label * np.log(y_pred + 1e-8) - (1 - label) * np.log(1 - y_pred + 1e-8)
+            # 计算交叉熵损失（加小值避免log(0)）
+            loss = -label * np.log(y_pred + 1e-8) - (1 - label) * np.log(1 - y_pred + 1e-8)
             total_loss += loss
+            # 反向传播：计算梯度
             model.backward(seq, h_states, y_pred, label)
+            # 更新权重
             model.update_weights(lr=lr)
         
+        # 打印每轮平均损失
         avg_loss = total_loss / len(train_sequences)
         print(f"Epoch {epoch+1}/{epochs} | 平均损失: {avg_loss:.4f}")
     return model
-    
+
 def test_model(model, test_sequences, test_labels, test_ids, save_path='manual_rnn_predictions.csv'):
     """测试模型并输出评估结果"""
     preds = []
