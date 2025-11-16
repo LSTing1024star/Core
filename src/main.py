@@ -68,8 +68,8 @@ if __name__ == "__main__":
     # 1. 加载并预处理数据（使用按时间分割后的train和test）
     (train_seqs, train_labels, train_ids,
      test_seqs, test_labels, test_ids) = load_and_preprocess_data(
-        train_path='train_data.csv',    # 按时间分割的训练集
-        test_path='test_data.csv',      # 按时间分割的测试集
+        train_path='D:/LST/Core-main/data/train_data_seq.csv',    # 按时间分割的训练集
+        test_path='D:/LST/Core-main/data/test_data_seq.csv',      # 按时间分割的测试集
         max_seq_len=12,                  # 每个学生最多3个学期的序列
         encoding='utf-8-sig'
     )
