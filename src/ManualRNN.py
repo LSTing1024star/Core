@@ -51,13 +51,6 @@ class ManualRNN:
 
 
     def backward(self, x_seq, h_states, y_pred, y_true):
-        """
-        反向传播（BPTT：沿时间反向传播）：计算权重梯度
-        :param x_seq: 输入序列，shape=(seq_len, input_dim)
-        :param h_states: 前向传播的隐藏状态列表
-        :param y_pred: 预测概率（标量）
-        :param y_true: 真实标签（0或1）
-        """
         seq_len = x_seq.shape[0]
         # 重置梯度
         self.grad_W_x.fill(0)
@@ -66,29 +59,27 @@ class ManualRNN:
         self.grad_b_h.fill(0)
         self.grad_b_y.fill(0)
         
-        # 1. 输出层梯度（二分类交叉熵损失的导数）
-        # 损失函数：L = -y_true*log(y_pred) - (1-y_true)*log(1-y_pred)
-        dy = (y_pred - y_true)  # 损失对输出y的导数（简化计算）
-        self.grad_W_y += dy * h_states[-1].T  # 最后一个时间步的隐藏状态
-        self.grad_b_y += dy
+        # 1. 输出层梯度（修正dy的维度）
+        dy = (y_pred - y_true).reshape(1, 1)  # 关键：将标量转为(1,1)的2维数组
+        self.grad_W_y += dy @ h_states[-1].T  # 修正：dy是(1,1)，h_states[-1].T是(1, hidden_dim)，结果(1, hidden_dim)
+        self.grad_b_y += dy  # dy是(1,1)，与b_y的形状(1,1)匹配
         
         # 2. 沿时间反向传播（从最后一个时间步到第一个）
-        dh_next = self.W_y.T @ dy  # 输出层梯度传递到隐藏层（最后一步）
+        dh_next = self.W_y.T @ dy  # 现在self.W_y.T是(hidden_dim,1)，dy是(1,1)，结果是(hidden_dim,1)，维度匹配
         for t in reversed(range(seq_len)):
-            h_t = h_states[t]
-            x_t = x_seq[t].reshape(-1, 1)  # 当前时间步输入
+            h_t = h_states[t]  # 形状(hidden_dim, 1)
+            x_t = x_seq[t].reshape(-1, 1)  # 形状(input_dim, 1)
             # tanh的导数：1 - tanh^2(h_t)
-            dtanh = (1 - h_t**2) * dh_next
+            dtanh = (1 - h_t**2) * dh_next  # 形状(hidden_dim, 1)
             # 累积隐藏层偏置梯度
             self.grad_b_h += dtanh
             # 累积输入→隐藏层权重梯度
-            self.grad_W_x += dtanh @ x_t.T
-            # 累积隐藏层→隐藏层权重梯度（依赖上一时间步的隐藏状态）
-            h_prev = h_states[t-1] if t > 0 else np.zeros_like(h_t)
-            self.grad_W_h += dtanh @ h_prev.T
+            self.grad_W_x += dtanh @ x_t.T  # (hidden_dim,1) @ (1, input_dim) → (hidden_dim, input_dim)
+            # 累积隐藏层→隐藏层权重梯度
+            h_prev = h_states[t-1] if t > 0 else np.zeros_like(h_t)  # (hidden_dim, 1)
+            self.grad_W_h += dtanh @ h_prev.T  # (hidden_dim,1) @ (1, hidden_dim) → (hidden_dim, hidden_dim)
             # 传递梯度到上一个时间步
-            dh_next = self.W_h.T @ dtanh
-
+            dh_next = self.W_h.T @ dtanh  # (hidden_dim, hidden_dim) @ (hidden_dim, 1) → (hidden_dim, 1)
 
     def update_weights(self, lr=0.01, clip_value=0.5):
         """
