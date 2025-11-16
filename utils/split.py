@@ -87,12 +87,12 @@ import numpy as np
 def split_train_test_by_time(
     data_path,
     id_col='XH',          # 学号列名
-    term_col='XQXN',      # 学期列名（字符串格式，如201601）
-    target_col='学业预警',  # 目标列名
+    term_col='XNXQ',      # 学期列名（字符串格式，如201601）
+    target_col='XYYJ',  # 目标列名
     test_ratio=0.2,       # 测试集占比（如0.2表示20%数据作为test）
-    save_train_path='train_data.csv',
-    save_test_path='test_data.csv',
-    encoding='gbk'
+    save_train_path='train_data_seq.csv',
+    save_test_path='test_data_seq.csv',
+    encoding='utf-8-sig'
 ):
     """
     按时间顺序分割时序数据集为train和test
@@ -152,8 +152,8 @@ def split_train_test_by_time(
 if __name__ == "__main__":
     # 路径设置（根据实际情况修改）
     totaldata_path = "D:/LST/Core-main/Core-main/data/totaldata.csv"  # 已生成的总数据
-    train_save_path = "D:/LST/Core-main/Core-main/data/train_data.csv"  # 训练集保存路径
-    test_save_path = "D:/LST/Core-main/Core-main/data/test_data.csv"    # 测试集保存路径
+    train_save_path = "D:/LST/Core-main/Core-main/data/train_data_seq.csv"  # 训练集保存路径
+    test_save_path = "D:/LST/Core-main/Core-main/data/test_data_seq.csv"    # 测试集保存路径
     
     # 调用函数：设置训练集XYYJ=1的目标占比为10%（可调整为0.2即20%等）
     # train_df, test_df = split_and_oversample(

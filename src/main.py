@@ -1,4 +1,8 @@
 from ManualRNN import ManualRNN
+from sklearn.metrics import confusion_matrix, classification_report 
+from tqdm import tqdm
+import pandas as pd
+import numpy as np
 import sys
 import os
 current_file_path = os.path.abspath(__file__)  # 结果类似：parent_dir/A/c.py
@@ -7,12 +11,13 @@ parent_dir = os.path.dirname(a_dir)            # 结果类似：parent_dir
 sys.path.append(parent_dir)
 from utils.buildSeq import load_and_preprocess_data
 
+
 def train_model(model, train_sequences, train_labels, epochs=20, lr=0.01):
     """训练手动RNN模型"""
     for epoch in range(epochs):
         total_loss = 0.0
         # 逐样本训练（简单起见，不实现批量梯度下降）
-        for seq, label in zip(train_sequences, train_labels):
+        for seq, label in tqdm(zip(train_sequences, train_labels)):
             # 前向传播：获取预测和隐藏状态
             y_pred, h_states = model.forward(seq)
             # 计算交叉熵损失（加小值避免log(0)）
@@ -51,7 +56,7 @@ def test_model(model, test_sequences, test_labels, test_ids, save_path='manual_r
         '预测标签': preds,
         '预测概率': probs
     })
-    result_df.to_csv(save_path, index=False, encoding='gbk')
+    result_df.to_csv(save_path, index=False, encoding='utf-8-sig')
     print(f"预测结果已保存至: {save_path}")
     return preds, probs
 

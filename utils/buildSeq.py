@@ -1,10 +1,11 @@
 import pandas as pd
 import numpy as np
+from sklearn.preprocessing import MinMaxScaler
 
 def load_and_preprocess_data(
     train_path, test_path,
-    id_col='XH', term_col='XQXN', target_col='学业预警',
-    feature_cols=['GPA', 'DCCY', 'JXJ'], max_seq_len=3, encoding='gbk'
+    id_col='XH', term_col='XNXQ', target_col='XYYJ',
+    feature_cols=['GPA', 'DCCY', 'JXJ'], max_seq_len=12, encoding='utf-8-sig'
 ):
     """加载数据并转换为时序序列（样本数, 序列长度, 特征数）"""
     # 加载训练集和测试集（已按时间分割）

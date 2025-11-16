@@ -1,4 +1,4 @@
-import numpy as pd
+import numpy as np
 
 class ManualRNN:
     def __init__(self, input_dim, hidden_dim=8, output_dim=1):
