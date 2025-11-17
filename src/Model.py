@@ -9,7 +9,7 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 
 class ModelTrainer:
-    def __init__(self, train_path, test_path, target_col='XYYJ', encoding='gbk'):
+    def __init__(self, train_path, test_path, target_col='XYYJ', encoding='utf-8-sig'):
         """
         初始化模型训练器
         :param train_path: 训练数据路径
@@ -42,9 +42,9 @@ class ModelTrainer:
         self.df_train = pd.read_csv(self.train_path, encoding=self.encoding).fillna(0)
         self.df_test = pd.read_csv(self.test_path, encoding=self.encoding).fillna(0)
         if "XH" in self.df_train.columns:
-            self.df_train.drop(colums=["XH"],inplace=True)
+            self.df_train.drop(columns=["XH"],inplace=True)
         if "XH" in self.df_test.columns:
-            self.df_test.drop(colums=["XH"],inplace=True)
+            self.df_test.drop(columns=["XH"],inplace=True)
         print(f"训练集形状: {self.df_train.shape}, 测试集形状: {self.df_test.shape}")
         print(f"训练集缺失值总数: {self.df_train.isnull().sum().sum()}")
         print(f"测试集缺失值总数: {self.df_test.isnull().sum().sum()}")
@@ -119,7 +119,7 @@ class ModelTrainer:
         print(f"最优超参数: {grid_search.best_params_}")
 
 
-    def predict(self, save_path='data_temp/test_with_predictions.csv'):
+    def predict(self, save_path='D:/LST/Core-main/Core-main/data/test_with_predictions3.csv'):
         """对测试集预测并保存结果"""
         self.pred_labels = self.best_model.predict(self.X_test_true)  # 预测标签
         self.pred_proba = self.best_model.predict_proba(self.X_test_true)[:, 1]  # 正类概率
