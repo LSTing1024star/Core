@@ -53,55 +53,51 @@ class ManualRNN:
         return np.array(y_preds), h_states  # 返回所有时间步的预测和隐藏状态
 
 
-    def backward(self, x_seq, h_states, y_preds, y_trues):
+    def backward(self, x_seq, h_states, y_preds, y_trues, mask_seq):
         """
-        反向传播：累积每个时间步的梯度（BPTT）
-        :param x_seq: 输入序列，(seq_len, input_dim)
-        :param h_states: 前向传播的隐藏状态，list of (hidden_dim, 1)
-        :param y_preds: 每个时间步的预测概率，(seq_len,)
-        :param y_trues: 每个时间步的真实标签，(seq_len,)
+        反向传播（仅累积真实时间步的梯度）
+        :param mask_seq: 掩码序列，shape=(seq_len,)，1=真实时间步
         """
         seq_len = x_seq.shape[0]
-        # 重置梯度（每次反向传播前清零）
         self.grad_W_x.fill(0)
         self.grad_W_h.fill(0)
         self.grad_W_y.fill(0)
         self.grad_b_h.fill(0)
         self.grad_b_y.fill(0)
         
-        # 初始化最后一个时间步的梯度传递（从输出层开始）
-        dh_next = np.zeros((self.hidden_dim, 1))  # 初始为0
+        dh_next = np.zeros((self.hidden_dim, 1))
         
-        # 从最后一个时间步反向遍历到第一个
         for t in reversed(range(seq_len)):
-            # 当前时间步的预测、真实标签和隐藏状态
-            y_pred = y_preds[t]
-            y_true = y_trues[t]
-            h_t = h_states[t]  # (hidden_dim, 1)
-            x_t = x_seq[t].reshape(-1, 1)  # (input_dim, 1)
+            # 仅处理真实时间步（mask=1）
+            if mask_seq[t] == 0:
+                # 填充时间步：跳过梯度计算，直接传递空梯度
+                h_t = h_states[t]
+                dtanh = np.zeros_like(h_t)  # 填充时间步梯度为0
+            else:
+                # 真实时间步：正常计算梯度
+                y_pred = y_preds[t]
+                y_true = y_trues[t]
+                h_t = h_states[t]
+                x_t = x_seq[t].reshape(-1, 1)
+                
+                # 输出层梯度
+                dy = (y_pred - y_true).reshape(1, 1)
+                self.grad_W_y += dy @ h_t.T
+                self.grad_b_y += dy
+                
+                # 隐藏层梯度
+                dh = self.W_y.T @ dy + dh_next
+                dtanh = (1 - h_t**2) * dh
+                
+                # 累积梯度
+                self.grad_b_h += dtanh
+                self.grad_W_x += dtanh @ x_t.T
+                h_prev = h_states[t-1] if t > 0 else np.zeros_like(h_t)
+                self.grad_W_h += dtanh @ h_prev.T
             
-            # 1. 计算当前时间步输出层的梯度
-            dy = (y_pred - y_true).reshape(1, 1)  # 损失对输出的导数，(1,1)
-            # 累积输出层权重和偏置的梯度
-            self.grad_W_y += dy @ h_t.T  # (1,1) @ (1, hidden_dim) → (1, hidden_dim)
-            self.grad_b_y += dy  # (1,1)
+            # 传递梯度到上一时间步（无论是否填充，均传递，保证时序连贯性）
+            dh_next = self.W_h.T @ dtanh
             
-            # 2. 计算当前时间步隐藏层的梯度（结合输出层和下一时间步的梯度）
-            # 隐藏层梯度 = 输出层传递的梯度 + 下一时间步隐藏层传递的梯度
-            dh = self.W_y.T @ dy + dh_next  # (hidden_dim,1) + (hidden_dim,1) → (hidden_dim,1)
-            # tanh的导数：1 - tanh^2(h_t)
-            dtanh = (1 - h_t**2) * dh  # (hidden_dim,1)
-            
-            # 3. 累积隐藏层相关的梯度
-            self.grad_b_h += dtanh  # 偏置梯度
-            self.grad_W_x += dtanh @ x_t.T  # 输入→隐藏层权重梯度 (hidden_dim, input_dim)
-            # 隐藏层→隐藏层权重梯度（依赖上一时间步的隐藏状态）
-            h_prev = h_states[t-1] if t > 0 else np.zeros_like(h_t)  # (hidden_dim,1)
-            self.grad_W_h += dtanh @ h_prev.T  # (hidden_dim, hidden_dim)
-            
-            # 4. 将梯度传递到上一个时间步
-            dh_next = self.W_h.T @ dtanh  # (hidden_dim, hidden_dim) @ (hidden_dim,1) → (hidden_dim,1)
-
 
     def update_weights(self, lr=0.01, clip_value=0.5):
         """用梯度下降更新权重（与之前一致，带梯度裁剪）"""
