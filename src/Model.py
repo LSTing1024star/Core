@@ -9,7 +9,7 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 
 class ModelTrainer:
-    def __init__(self, train_path, test_path, target_col='学业预警', encoding='gbk'):
+    def __init__(self, train_path, test_path, target_col='XYYJ', encoding='gbk'):
         """
         初始化模型训练器
         :param train_path: 训练数据路径
@@ -184,6 +184,29 @@ class ModelTrainer:
                 if max_val != min_val:
                     df[col] = (df[col] - min_val) / (max_val - min_val)
                     
+    def analyze_feature_importance(self):
+        """分析并打印特征重要性"""
+        if self.best_model is None:
+            print("请先训练模型（调用train_model方法）")
+            return
+        
+        # 获取特征名称（排除目标列）
+        feature_names = self.df_train.columns[:-1].tolist()
+        
+        # 获取特征重要性得分
+        importances = self.best_model.feature_importances_
+        
+        # 组合特征名称和重要性，并按重要性排序
+        feature_importance = pd.DataFrame({
+            '特征名称': feature_names,
+            '重要性得分': importances
+        }).sort_values(by='重要性得分', ascending=False)
+        
+        # 打印结果
+        print("\n【特征重要性排序】")
+        print(feature_importance.round(4))  # 保留4位小数
+
+
 def normalize_data(
     train_df,
     test_df,
