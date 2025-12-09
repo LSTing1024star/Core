@@ -1,15 +1,3 @@
-<<<<<<< HEAD
-from Model import ModelTrainer
-# from ConfidenceAnalyzer import ConfidenceAnalyzer
-# from ExplainabilityAnalyzer import ExplainabilityAnalyzer
-
-if __name__ == "__main__":
-    # 1. 模型训练与预测
-    trainer = ModelTrainer(
-        train_path='D:/LST/Core-main/Core-main/data/train_data.csv',
-        test_path='D:/LST/Core-main/Core-main/data/test_data.csv',
-        target_col='XYYJ'
-=======
 # 1. 必要的基础库导入（放在顶部）
 import argparse  # 用于命令行参数解析
 
@@ -33,37 +21,12 @@ def main(model_type="base"):
         id_col='XH' if model_type == 'seq' else None,
         term_col='XQ' if model_type == 'seq' else None,
         max_seq_len=3 if model_type == 'seq' else None
->>>>>>> c5379a89db886d7008220dfc20b8bf38f1b506af
     )
 
     # 4. 模型训练与预测
     trainer.load_data()
     trainer.preprocess_data()
     trainer.split_data()
-<<<<<<< HEAD
-    trainer.train_model()  # 使用默认超参数网格
-    trainer.predict()  # 预测并保存结果
-    
-    # # 2. 置信度分析
-    # confidence_analyzer = ConfidenceAnalyzer(
-    #     model=trainer.best_model,
-    #     X_test=trainer.X_test_true,
-    #     y_true=trainer.y_test_true,
-    #     pred_proba=trainer.pred_proba,
-    #     feature_names=trainer.df_train.columns[:-1].tolist()  # 特征名称（排除目标列）
-    # )
-    # confidence_analyzer.run_full_analysis()
-    
-    # # 3. 可解释性分析
-    # explain_analyzer = ExplainabilityAnalyzer(
-    #     model=trainer.best_model,
-    #     X_test=trainer.X_test_true,
-    #     y_true=trainer.y_test_true,
-    #     pred_labels=trainer.pred_labels,
-    #     feature_names=trainer.df_train.columns[:-1].tolist()  # 特征名称
-    # )
-    # explain_analyzer.run_full_analysis()
-=======
     trainer.train_model()
     trainer.predict()
 
@@ -101,4 +64,43 @@ if __name__ == "__main__":
     
     # 执行主流程
     main(model_type=args.model_type)
->>>>>>> c5379a89db886d7008220dfc20b8bf38f1b506af
+
+
+# from Model import ModelTrainer
+# # from ConfidenceAnalyzer import ConfidenceAnalyzer
+# # from ExplainabilityAnalyzer import ExplainabilityAnalyzer
+
+# if __name__ == "__main__":
+#     # 1. 模型训练与预测
+#     trainer = ModelTrainer(
+#         train_path='D:/LST/Core-main/Core-main/data/train_data.csv',
+#         test_path='D:/LST/Core-main/Core-main/data/test_data.csv',
+#         target_col='XYYJ'
+#     )
+
+#     # 4. 模型训练与预测
+#     trainer.load_data()
+#     trainer.preprocess_data()
+#     trainer.split_data()
+#     trainer.train_model()  # 使用默认超参数网格
+#     trainer.predict()  # 预测并保存结果
+    
+#     # # 2. 置信度分析
+#     # confidence_analyzer = ConfidenceAnalyzer(
+#     #     model=trainer.best_model,
+#     #     X_test=trainer.X_test_true,
+#     #     y_true=trainer.y_test_true,
+#     #     pred_proba=trainer.pred_proba,
+#     #     feature_names=trainer.df_train.columns[:-1].tolist()  # 特征名称（排除目标列）
+#     # )
+#     # confidence_analyzer.run_full_analysis()
+    
+#     # # 3. 可解释性分析
+#     # explain_analyzer = ExplainabilityAnalyzer(
+#     #     model=trainer.best_model,
+#     #     X_test=trainer.X_test_true,
+#     #     y_true=trainer.y_test_true,
+#     #     pred_labels=trainer.pred_labels,
+#     #     feature_names=trainer.df_train.columns[:-1].tolist()  # 特征名称
+#     # )
+#     # explain_analyzer.run_full_analysis()
