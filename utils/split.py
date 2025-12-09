@@ -80,6 +80,40 @@ def split_and_oversample(
     
     return train_df, test_df
 
+import pandas as pd
+from sklearn.model_selection import train_test_split
+
+def split_imbalanced_data(traindata_path,df_train=None,n_splits=49, random_state=42):
+    # 读取数据，分离正负样本
+    if df_train is None:
+        df = pd.read_csv(traindata_path, encoding="utf-8-sig").fillna(0)
+    else:
+        df=df_train
+    pos_samples = df[df["XYYJ"] == 1].copy()  # 正样本（98%）
+    neg_samples = df[df["XYYJ"] == 0].copy()  # 负样本（2%）
+    
+    # 同分布拆分负样本为n_splits份（使用分层抽样确保分布一致）
+    pos_splits = []
+    remaining = pos_samples
+    for i in range(n_splits - 1):
+        # 每次拆分1/n_splits比例的正样本
+        split, remaining = train_test_split(
+            remaining, 
+            test_size=1 - 1/(n_splits - i),  # 保证最终拆分均匀
+            random_state=random_state,
+            stratify=remaining["XYYJ"]  # 按关键特征分层，确保分布一致
+        )
+        pos_splits.append(split)
+    pos_splits.append(remaining)  # 最后一份
+    
+    # 生成9个平衡子数据集（正样本+拆分后的负样本）
+    sub_datasets = []
+    for pos_split in pos_splits:
+        sub_df = pd.concat([pos_samples, neg_split], ignore_index=True)
+        sub_df = sub_df.sample(frac=1, random_state=random_state)  # 打乱顺序
+        sub_datasets.append(sub_df)
+    
+    return sub_datasets  # 返回9个平衡子数据集
 
 # #############使用示例#############
 if __name__ == "__main__":

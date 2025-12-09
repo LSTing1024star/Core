@@ -7,6 +7,11 @@ from sklearn.metrics import confusion_matrix, classification_report, mean_square
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
+current_path = os.path.abspath(__file__)
+parent_path = os.path.dirname(os.path.dirname(current_path))
+sys.path.append(parent_path)
+from utils.split import split_imbalanced_data
+
 
 class ModelTrainer:
     def __init__(self, train_path, test_path, target_col='XYYJ', encoding='utf-8-sig'):
@@ -24,6 +29,7 @@ class ModelTrainer:
         
         # 初始化变量
         self.df_train = None  # 训练数据
+        self.subdf_train_list=[]
         self.df_test = None  # 测试数据（原始）
         self.X_train = None  # 训练特征（标准化后）
         self.X_test = None  # 验证特征（标准化后）
@@ -90,9 +96,28 @@ class ModelTrainer:
         self.X_test_true = self.scaler.transform(data_test[:, :-1])
         self.y_test_true = data_test[:, -1]
 
+    def _project(self,df):
+        data=self.df.to_numpy()
+        X = data[:,:-1]
+        y = data[:,-1]
+        X_train,X_test,y_train,y_test=train_test_split(
+            X,y,
+            test_size=test_size,
+            random_state=random_state
+        )
+
+        # 每个子数据集单独用自己的scaler（避免子集间数据泄露）
+        sub_scaler = StandardScaler()
+        X_train_scaled = sub_scaler.fit_transform(X_train)
+        X_test_scaled = sub_scaler.transform(X_test)
+        
+        return X_train_scaled, X_test_scaled, y_train, y_test, sub_scaler
 
     def train_model(self, param_grid=None, cv=3, scoring='accuracy'):
         """训练模型并通过GridSearchCV寻找最优超参数"""
+        # self.subdf_train_list=split_imbalanced_data(self.train_path,df_train=self.df_train,encoding="utf-8-sig")
+        # print(f"共生成 {len(self.subdf_train_list)} 个子训练集")
+        
         if param_grid is None:
             # 默认超参数网格
             param_grid = {
